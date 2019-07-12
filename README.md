@@ -1,2 +1,2 @@
-# RaytracingInAWeekend
-Python implementation of Ray tracing in a weekend
+# RaytracingTheNextWeek
+Python implementation of Ray tracing the next week

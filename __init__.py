@@ -1,15 +1,16 @@
-import numpy as np
-from ray import Ray
-from math import pow
-from hitable import Hitable, hit_record
-from sphere import Sphere
-from hitable_list import hitable_list
-from camera import Camera
-from random import random, seed
-from time import time_ns
-import material
 import sys
 from multiprocessing import Pool, cpu_count
+from random import random, seed
+from time import time_ns
+
+import numpy as np
+
+import material
+from camera import Camera
+from hitable import Hitable, hitable_list
+
+from ray import Ray
+from sphere import Sphere, moving_sphere
 
 
 def color(r: Ray, world: Hitable):
@@ -129,23 +130,24 @@ if __name__ == '__main__':
 
     f.write("P3\n{} {}\n255".format(nx, ny))
 
-    lookfrom: np.ndarray = np.array((3, 3, 2))
+    lookfrom: np.ndarray = np.array((0, 0, 0))
     lookat: np.ndarray = np.array((0, 0, -1))
     dist_to_focus = np.linalg.norm(lookfrom - lookat)
-    aperture = 2.0
+    aperture = 0
     # cam = Camera(np.array((0, 0, 0)), np.array((0, 0, -1)), np.array((0, 1, 0)), 90, nx / ny)
-    cam = Camera(lookfrom, lookat, np.array((0, 1, 0)), 20, float(nx) / float(ny), aperture, dist_to_focus)
+    cam = Camera(lookfrom, lookat, np.array((0, 1, 0)), 100, float(nx) / float(ny), aperture, dist_to_focus, 0.0, 0.25)
     R = np.cos(np.pi / 4)
 
     h_list = list()
     # h_list.append(Sphere(np.array((-R, 0, -1)), R, material.lambertian(np.array((0., 0., 1.)))))
     # h_list.append(Sphere(np.array((R, 0, -1)), R, material.lambertian(np.array((1., 0., 0.)))))
-    h_list.append(Sphere(np.array((0, 0, -1)), 0.5, material.lambertian(np.array((0.1, 0.2, 0.5)))))
+    h_list.append(moving_sphere(np.array((0, 0, -1)), np.array((0, 1, -1)), 0.0, 1.0, 0.5,
+                                material.lambertian(np.array((0.1, 0.2, 0.5)))))
     h_list.append(Sphere(np.array((0, -100.5, -1)), 100, material.lambertian(np.array((0.8, 0.8, 0)))))
-    h_list.append(Sphere(np.array((1, 0, -1)), 0.5, material.metal(np.array((0.8, 0.6, 0.2)), 0.3)))
-    h_list.append(Sphere(np.array((-1, 0, -1)), 0.5, material.dielectric(1.5)))
+    h_list.append(Sphere(np.array((1, 0, -1)), 0.5, material.metal(np.array((1, 1, 1)), 0.0)))
+    # h_list.append(Sphere(np.array((-1, 0, -1)), 0.5, material.dielectric(1.5)))
     # h_list.append(Sphere(np.array((-1, 0, -1)), -0.45, material.dielectric(1.5)))
-    h_list.append(Sphere(np.array((-5, 2.5, -5)), 2, material.lambertian(np.array((0.1, 0.2, 0.5)))))
+    # h_list.append(Sphere(np.array((-5, 2.5, -5)), 2, material.lambertian(np.array((0.1, 0.2, 0.5)))))
     world: Hitable = hitable_list(h_list)
     img = dict()
     seed(time_ns())

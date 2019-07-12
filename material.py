@@ -28,7 +28,7 @@ class lambertian(material):
 
     def scatter(self, r_in: Ray, rec: hit_record):
         target: np.ndarray = rec.p + rec.normal + random_in_unit_sphere()
-        scattered = Ray(rec.p, target - rec.p)
+        scattered = Ray(rec.p, target - rec.p, r_in.time())
         attenuation = self.albedo
 
         return True, attenuation, scattered
@@ -47,7 +47,7 @@ class metal(material):
         unit_direction = r_in.direction() / np.linalg.norm(r_in.direction())
 
         reflected: np.ndarray = reflect(unit_direction, rec.normal)
-        scattered = Ray(rec.p, reflected + self.fuzz * random_in_unit_sphere())
+        scattered = Ray(rec.p, reflected + self.fuzz * random_in_unit_sphere(), r_in.time())
         attenuation = self.albedo
         return (np.dot(scattered.direction(), rec.normal) > 0), attenuation, scattered
 
@@ -55,7 +55,7 @@ class metal(material):
 def refract(v: np.ndarray, n: np.ndarray, ni_over_nt: float):
     uv: np.ndarray = v / np.linalg.norm(v)
     dt = np.dot(uv, n)
-    discriminant: float = 1.0 - ni_over_nt * ni_over_nt * (1 - dt * dt)
+    discriminant: float = float(1.0 - ni_over_nt * ni_over_nt * (1 - dt * dt))
     if discriminant > 0:
         refracted = ni_over_nt * (uv - n * dt) - n * sqrt(discriminant)
         return True, refracted
@@ -84,7 +84,7 @@ class dielectric(material):
         else:
             outward_normal = rec.normal
             ni_over_nt = 1.0 / self.ref_idx
-            cosine = -np.dot(r_in.direction(), rec.normal) / np.linalg.norm(r_in.direction())
+            cosine = float(-np.dot(r_in.direction(), rec.normal) / np.linalg.norm(r_in.direction()))
 
         has_refracted, refracted = refract(r_in.direction(), outward_normal, ni_over_nt)
         if has_refracted:
@@ -94,9 +94,9 @@ class dielectric(material):
             reflect_prob = 1
 
         if random() < reflect_prob:
-            scattered = Ray(rec.p, reflected)
+            scattered = Ray(rec.p, reflected, r_in.t())
 
         else:
-            scattered = Ray(rec.p, refracted)
+            scattered = Ray(rec.p, refracted, r_in.t())
 
         return True, attenuation, scattered
