@@ -1,3 +1,4 @@
+import sys
 from random import random, seed
 from time import time_ns
 
@@ -5,15 +6,16 @@ import numpy as np
 
 from aabb import surrounding_box, aabb
 from ray import Ray
-import sys
 
 
 class hit_record:
-    def __init__(self, t: float, p: np.ndarray, normal: np.ndarray, material):
+    def __init__(self, t: float, p: np.ndarray, normal: np.ndarray, material, u:float = 0, v:float = 0):
         self.t = t
         self.p = p
         self.normal = normal
         self.material = material
+        self.u = u
+        self.v = v
 
     def __str__(self):
         return "t: {} p: {} normal: {} material{}".format(self.t, self.p, self.normal, self.material)
@@ -80,32 +82,33 @@ class hitable_list(Hitable):
 
 class bvh_node(Hitable):
 
-    def __init__(self, l: Hitable, n: int, time0: float, time1: float):
+    def __init__(self, l: hitable_list, time0: float, time1: float):
         self.box: aabb = None
         self.left: Hitable = None
         self.right: Hitable = None
+
         seed(time_ns)
         axis = int(3 * random())
 
         if axis == 0:
-            sorted(l, key=lambda hitable: hitable.box_x_compare)
+            sorted(l.l, key=lambda hitable: hitable.box_x_compare())
 
         elif axis == 1:
-            sorted(l, key=lambda hitable: hitable.box_y_compare)
+            sorted(l.l, key=lambda hitable: hitable.box_y_compare())
 
         else:
-            sorted(l, key=lambda hitable: hitable.box_z_compare)
+            sorted(l.l, key=lambda hitable: hitable.box_z_compare())
 
-        if len(l) == 1:
-            self.left = l[0]
-            self.right = l[0]
-        elif len(l) == 2:
-            self.left = l[0]
-            self.right = l[1]
+        if len(l.l) == 1:
+            self.left = l.l[0]
+            self.right = l.l[0]
+        elif len(l.l) == 2:
+            self.left = l.l[0]
+            self.right = l.l[1]
 
         else:
-            self.left = bvh_node(l[:len(l) / 2], time0, time1)
-            self.right = bvh_node(l[len(l) / 2:], time0, time1)
+            self.left = bvh_node(hitable_list(l.l[0:int(len(l.l) / 2)]), time0, time1)
+            self.right = bvh_node(hitable_list(l.l[int(len(l.l) / 2):len(l.l)]), time0, time1)
 
         has_bound_left, box_left = self.left.bounding_box(time0, time1)
         has_bound_right, box_right = self.right.bounding_box(time0, time1)

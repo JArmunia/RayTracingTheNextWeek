@@ -2,10 +2,10 @@ from random import random, seed
 from time import time_ns
 
 import numpy as np
-from math import sqrt, pow
-
 from hitable import hit_record
+from math import sqrt, pow
 from ray import Ray
+from texture import texture
 
 
 def random_in_unit_sphere():
@@ -21,15 +21,18 @@ class material:
     def scatter(self, r_in: Ray, rec: hit_record):
         pass
 
+    def emitted(self, u: float, v: float, p: np.ndarray):
+        return np.array((0, 0, 0))
+
 
 class lambertian(material):
-    def __init__(self, a: np.ndarray):
-        self.albedo = a
+    def __init__(self, a: texture):
+        self.albedo: texture = a
 
     def scatter(self, r_in: Ray, rec: hit_record):
         target: np.ndarray = rec.p + rec.normal + random_in_unit_sphere()
         scattered = Ray(rec.p, target - rec.p, r_in.time())
-        attenuation = self.albedo
+        attenuation = self.albedo.value(0, 0, rec.p)
 
         return True, attenuation, scattered
 
@@ -94,9 +97,20 @@ class dielectric(material):
             reflect_prob = 1
 
         if random() < reflect_prob:
-            scattered = Ray(rec.p, reflected, r_in.t())
+            scattered = Ray(rec.p, reflected, r_in.time())
 
         else:
-            scattered = Ray(rec.p, refracted, r_in.t())
+            scattered = Ray(rec.p, refracted, r_in.time())
 
         return True, attenuation, scattered
+
+
+class diffuse_light(material):
+    def __init__(self, a: texture):
+        self.emit = a
+
+    def scatter(self, r_in: Ray, rec: hit_record):
+        return False, None, None
+
+    def emitted(self, u: float, v: float, p: np.ndarray):
+        return emit.value(u, v, p)

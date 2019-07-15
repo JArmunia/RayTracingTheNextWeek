@@ -24,7 +24,7 @@ class aabb:
 
     def hit(self, r: Ray, tmin: float, tmax: float):
         for a in range(3):
-            invD = 1.0 / r.direcion()[a]
+            invD = 1.0 / r.direction()[a]
 
             t0 = (self._min[a] - r.origin()[a]) * invD
 
@@ -35,8 +35,8 @@ class aabb:
                 t1 = t0
                 t0 = aux
 
-            tmin = t0 if t0 < tmin else tmin
-            tmax = t0 if t0 > tmin else tmin
+            tmin = t0 if t0 > tmin else tmin
+            tmax = t1 if t1 < tmax else tmax
 
             if tmax <= tmin:
                 return False

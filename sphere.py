@@ -6,6 +6,12 @@ from aabb import aabb, surrounding_box
 from hitable import hit_record, Hitable
 from ray import Ray
 
+def get_shpere_uv(p: np.ndarray):
+    phi: float = np.arctan2(p[2], p[0])
+    theta: float = np.arcsin(p[1])
+    u = 1 - (phi + np.pi) / (2 * np.pi)
+    v = (theta + np.pi / 2) / np.pi
+    return u, v
 
 class Sphere(Hitable):
     def __init__(self, center: np.ndarray, radius: float, m: material.material):
@@ -26,7 +32,8 @@ class Sphere(Hitable):
                 t = temp
                 p = r.point_at_parameter(t)
                 normal = (p - self.center) / self.radius
-                rec = hit_record(t, p, normal, self.material)
+                u, v = get_shpere_uv(p)
+                rec = hit_record(t, p, normal, self.material, u, v)
                 return True, rec
 
             temp = float((-b + sqrt(b * b - a * c)) / a)
@@ -34,7 +41,8 @@ class Sphere(Hitable):
                 t = temp
                 p = r.point_at_parameter(t)
                 normal = (p - self.center) / self.radius
-                rec = hit_record(t, p, normal, self.material)
+                u, v = get_shpere_uv(p)
+                rec = hit_record(t, p, normal, self.material,u,v)
                 return True, rec
 
         return False, None
