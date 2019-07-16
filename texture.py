@@ -12,6 +12,7 @@ class constant_texture(texture):
         self.color: np.ndarray = c
 
     def value(self, u: float, v: float, p: np.ndarray) -> np.ndarray:
+
         return self.color
 
 
@@ -116,7 +117,7 @@ class noise_texture(texture):
 
     def value(self, u: float, v: float, p: np.ndarray) -> np.ndarray:
         # return np.array((1, 1, 1), float) * self.noise.noise(p * self.scale)
-
-        return np.array((1, 1, 1)) * 0.5 * (1 + np.sin(self.scale * p[2] + 10 * self.noise.turb(p)))
-
-
+        #print("u: {} v: {} p {}".format(u, v, p))
+        ret = np.array((1, 1, 1)) * 0.5 * (1 + np.sin(self.scale * p[2] + 10 * self.noise.turb(p)))
+        #print("noise: " + str(ret))
+        return ret

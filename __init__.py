@@ -10,7 +10,7 @@ from camera import Camera
 from hitable import Hitable, hitable_list, bvh_node
 from ray import Ray
 from sphere import Sphere, moving_sphere
-from texture import constant_texture
+from texture import constant_texture, noise_texture
 
 
 def color(r: Ray, world: Hitable):
@@ -52,7 +52,7 @@ def color(r: Ray, world: Hitable):
             accumulate_attenuation *= attenuation
         else:
 
-            return np.array((0, 0, 0))
+            return np.array((0.1, 0.1, 0.1))
 
     unit_direction = scattered.direction() / np.linalg.norm(scattered.direction())
     t = 0.5 * (unit_direction[1] + 1)
@@ -86,8 +86,19 @@ def color(r: Ray, world: Hitable, depth: int = 0):
         emitted = rec.material.emitted(rec.u, rec.v, rec.p)
         has_scattered, attenuation, scattered = rec.material.scatter(r, rec)
         if (depth < 50) and has_scattered:
-            return emitted + attenuation * color(scattered, world, depth + 1)
+            if type(rec.material) == material.lambertian:
+                if type(rec.material.albedo) == noise_texture:
+                    #print(rec)
+
+                    #print("Attenuation: " + str(attenuation))
+                    #print("EmittedPrev: " + str(emitted))
+                    pass
+
+            x = (emitted + (attenuation * color(scattered, world, depth + 1)))
+            # print("returncolor: " + str(x))
+            return x
         else:
+            # print("emitted: " + str(emitted))
             return emitted
 
     else:
@@ -124,12 +135,12 @@ if __name__ == '__main__':
 
     f.write("P3\n{} {}\n255".format(nx, ny))
 
-    lookfrom: np.ndarray = np.array((13, 2, 3))
+    lookfrom: np.ndarray = np.array((12, 2, 3))
     lookat: np.ndarray = np.array((0, 0, 0))
     dist_to_focus = np.linalg.norm(lookfrom - lookat)
     aperture = 0
     # cam = Camera(np.array((0, 0, 0)), np.array((0, 0, -1)), np.array((0, 1, 0)), 90, nx / ny)
-    cam = Camera(lookfrom, lookat, np.array((0, 1, 0)), 20, float(nx) / float(ny), aperture, dist_to_focus, 0.0, 0.25)
+    cam = Camera(lookfrom, lookat, np.array((0, 1, 0)), 40, float(nx) / float(ny), aperture, dist_to_focus, 0.0, 0.1)
     R = np.cos(np.pi / 4)
 
     h_list = list()
@@ -144,8 +155,8 @@ if __name__ == '__main__':
     # h_list.append(Sphere(np.array((-1, 0, -1)), -0.45, material.dielectric(1.5)))
     # h_list.append(Sphere(np.array((-5, 2.5, -5)), 2, material.lambertian(np.array((0.1, 0.2, 0.5)))))
     # world: Hitable = hitable_list(scenes.random_scene())
-    # world = bvh_node(scenes.two_perlin_spheres(), 0, 0)
-    world = scenes.two_perlin_spheres()
+    world = bvh_node(scenes.simple_light(), 0, 0)
+    # world = scenes.two_perlin_spheres()
     img = dict()
     seed(time_ns())
     t_init = time_ns()
@@ -160,6 +171,8 @@ if __name__ == '__main__':
                 r = cam.get_ray(u, v)
                 p = r.point_at_parameter(2)
                 col += color(r, world)
+
+            # print("COL#############################################:  " + str(col))
 
             col = np.sqrt(col / ns) * 255.99
 

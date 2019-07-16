@@ -1,10 +1,9 @@
 from random import random
 
-import numpy as np
-
 import material
-from hitable import Hitable, hitable_list
-from sphere import Sphere
+import numpy as np
+from hitable import Hitable, hitable_list, xy_rect
+from sphere import Sphere, moving_sphere
 from texture import constant_texture, checker_texture, noise_texture
 
 
@@ -51,5 +50,21 @@ def two_perlin_spheres() -> Hitable:
     h_list = list()
     h_list.append(Sphere(np.array((0, -1000, 0)), 1000, material.lambertian(pertext)))
     h_list.append(Sphere(np.array((0, 2, 0)), 2, material.lambertian(pertext)))
+
+    return hitable_list(h_list)
+
+
+def simple_light():
+    pertext = noise_texture(4)
+    h_list = list()
+    checker = checker_texture(constant_texture(np.array((0.2, 0.3, 0.1), float)),
+                              constant_texture(np.array((0.9, 0.9, 0.9), float)))
+    h_list.append(Sphere(np.array((0, -1000, 0)), 1000, material.lambertian(checker)))
+    h_list.append(Sphere(np.array((0, 2, 0)), 2, material.lambertian(pertext)))
+    h_list.append(Sphere(np.array((2, 2, -2)), 2, material.dielectric(1)))
+    h_list.append(moving_sphere(np.array((-2, 2, 2)),np.array((-2, 2, 2)),0,1, 2, material.lambertian(pertext)))
+    h_list.append(Sphere(np.array((0, 7, 0)), 2, material.diffuse_light(constant_texture(np.array((4, 4, 4))))))
+
+    h_list.append(xy_rect(0, 50, 0, 30, -2, material.diffuse_light(constant_texture(np.array((4, 4, 4))))))
 
     return hitable_list(h_list)

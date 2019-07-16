@@ -5,7 +5,7 @@ import numpy as np
 from hitable import hit_record
 from math import sqrt, pow
 from ray import Ray
-from texture import texture
+from texture import texture, constant_texture, noise_texture
 
 
 def random_in_unit_sphere():
@@ -32,7 +32,13 @@ class lambertian(material):
     def scatter(self, r_in: Ray, rec: hit_record):
         target: np.ndarray = rec.p + rec.normal + random_in_unit_sphere()
         scattered = Ray(rec.p, target - rec.p, r_in.time())
-        attenuation = self.albedo.value(0, 0, rec.p)
+        attenuation = self.albedo.value(rec.u, rec.v, rec.p)
+        # attenuation = np.array((0.5, 0.5, 0.5))
+        # print("rin: " + str(r_in))
+
+        if type(self.albedo) == noise_texture:
+            print("attenuation: " + str(attenuation))
+            print("scatter: " + str(scattered))
 
         return True, attenuation, scattered
 
@@ -43,7 +49,7 @@ def reflect(v: np.ndarray, n: np.ndarray):
 
 class metal(material):
     def __init__(self, a: np.ndarray, fuzz: float):
-        self.albedo = a
+        self.albedo: np.ndarray = a
         self.fuzz = fuzz
 
     def scatter(self, r_in: Ray, rec: hit_record):
@@ -113,4 +119,4 @@ class diffuse_light(material):
         return False, None, None
 
     def emitted(self, u: float, v: float, p: np.ndarray):
-        return emit.value(u, v, p)
+        return self.emit.value(4, 4, 4)

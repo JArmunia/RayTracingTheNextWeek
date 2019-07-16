@@ -2,14 +2,14 @@ import sys
 from random import random, seed
 from time import time_ns
 
+import material
 import numpy as np
-
 from aabb import surrounding_box, aabb
 from ray import Ray
 
 
 class hit_record:
-    def __init__(self, t: float, p: np.ndarray, normal: np.ndarray, material, u:float = 0, v:float = 0):
+    def __init__(self, t: float, p: np.ndarray, normal: np.ndarray, material, u: float = 0, v: float = 0):
         self.t = t
         self.p = p
         self.normal = normal
@@ -18,7 +18,7 @@ class hit_record:
         self.v = v
 
     def __str__(self):
-        return "t: {} p: {} normal: {} material{}".format(self.t, self.p, self.normal, self.material)
+        return "t: {} p: {} normal: {} material{}\nu: {} v: {}".format(self.t, self.p, self.normal, self.material, self.u, self.v)
 
 
 class Hitable:
@@ -144,3 +144,35 @@ class bvh_node(Hitable):
 
     def bounding_box(self, t0: float, t1: float):
         return True, self.box
+
+
+class xy_rect(Hitable):
+    def __init__(self, x0: float, x1: float, y0: float, y1: float, k: float, mat: material):
+        self.x0 = x0
+        self.x1 = x1
+        self.y0 = y0
+        self.y1 = y1
+        self.k = k
+        self.material = mat
+
+    def hit(self, r: Ray, t_min: float, t_max: float):
+        t: float = (self.k - r.origin()[2]) / r.direction()[2]
+
+        if (t < t_min) or (t > t_max):
+            return False, None
+        x: float = r.origin()[0] + t * r.direction()[0]
+        y: float = r.origin()[1] + t * r.direction()[1]
+
+        if (x < self.x0) or (x > self.x1) or (y < self.y0) or (y > self.y1):
+            return False, None
+
+        u = (x - self.x0) / (self.x1 - self.x0)
+        v = (y - self.y0) / (self.y1 - self.y0)
+        p = r.point_at_parameter(t)
+        normal = np.array((0, 0, 1))
+
+        return True, hit_record(t, p, normal, self.material, u, v)
+
+    def bounding_box(self, t0: float, t1: float):
+        box = aabb(np.array((self.x0, self.y0, self.k - 0.0001)), np.array((self.x1, self.y1, self.k + 0.0001)))
+        return True, box
